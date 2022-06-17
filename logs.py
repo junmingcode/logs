@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
 import sys
 import logging.handlers
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 
-DEFAULT_LOG_FMT = '%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s: %(message)s'
+DEFAULT_LOG_FMT = '%(asctime)s  [process: %(process)s]  [thread: %(thread)s]  %(filename)s [line:%(lineno)d] %(levelname)s: %(message)s'
 DEFUALT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S'
 Handlers = {
     # logging.NOTSET : "./log/NOTSET.log",
@@ -38,25 +39,28 @@ class Logger(object):
 
     def _get_rotating_file_handler(self, filename):
         '''get a file handler,will write log in file'''
-        rotating_handler = logging.handlers.RotatingFileHandler(filename=filename, maxBytes=4194304, backupCount=5,
-                                                                encoding="utf-8")
+        # rotating_handler = logging.handlers.RotatingFileHandler(filename=filename, maxBytes=41943040, backupCount=5,
+        #                                                         encoding="utf-8")
+        # Multi process support
+        rotating_handler = ConcurrentRotatingFileHandler(filename=filename, maxBytes=41943040, backupCount=5,
+                                                         encoding="utf-8")
         rotating_handler.setFormatter(self.formatter)
         return rotating_handler
 
-    def _debug(self):
-        '''return a function that write debug message'''
+    @property
+    def debug(self):
         return self.log_set[logging.DEBUG].debug
 
-    def _info(self):
-        '''return a function that write info message'''
+    @property
+    def info(self):
         return self.log_set[logging.INFO].info
 
-    def _warning(self):
-        '''return a function that write warning message'''
+    @property
+    def warning(self):
         return self.log_set[logging.WARNING].warning
 
-    def _error(self):
-        '''return a function that write error message'''
+    @property
+    def error(self):
         return self.log_set[logging.ERROR].error
 
 
@@ -64,11 +68,6 @@ logger = Logger()
 
 if __name__ == '__main__':
     # Function assignment must be made
-    logger.debug = logger._debug()
-    logger.info = logger._info()
-    logger.warning = logger._warning()
-    logger.error = logger._error()
-
     logger.debug("debug")
     logger.info("info")
     logger.warning("warning")
